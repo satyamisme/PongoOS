@@ -28,7 +28,7 @@
 #include <aes/aes_private.h>
 #include <recfg/recfg_soc_private.h>
 
-void shell_main();
+void shell_main(void);
 
 /*
 
@@ -39,7 +39,7 @@ void shell_main();
 
 uint64_t gBootTimeTicks;
 char gFWVersion[256];
-void pongo_main_task() {
+void pongo_main_task(void) {
     gBootTimeTicks = get_ticks();
 
     // Setup HAL

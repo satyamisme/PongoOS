@@ -1519,7 +1519,7 @@ static int kpf_compare_patches(const void *a, const void *b)
 
 static checkrain_option_t kpf_flags, checkra1n_flags;
 
-static void kpf_cmd(const char *cmd, char *args)
+static void kpf_cmd(void)
 {
     static bool kpf_didrun = false;
     if(kpf_didrun)
@@ -1977,7 +1977,7 @@ void module_entry(void)
     preboot_hook = kpf_cmd;
     command_register("checkra1n_flags", "set flags for checkra1n userland", checkra1n_flags_cmd);
     command_register("kpf_flags", "set flags for kernel patchfinder", kpf_flags_cmd);
-    command_register("kpf", "running checkra1n-kpf without booting (use bootux afterwards)", kpf_cmd);
+    command_register("kpf", "running checkra1n-kpf without booting (use bootux afterwards)", (void*)kpf_cmd);
     command_register("overlay", "loads an overlay disk image", kpf_overlay_cmd);
 }
 const char *module_name = "checkra1n-kpf2-12.0,16.4";

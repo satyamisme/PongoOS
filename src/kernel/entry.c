@@ -49,7 +49,7 @@ struct task pongo_task = {.name = "main"};
 
 */
 
-int pongo_fiq_handler() {
+int pongo_fiq_handler(void) {
     timer_rearm();
     return !!(task_current()->flags & TASK_PREEMPT);
 }
@@ -61,7 +61,7 @@ int pongo_fiq_handler() {
 
 */
 
-__attribute__((noinline)) void pongo_reinstall_vbar() {
+__attribute__((noinline)) void pongo_reinstall_vbar(void) {
     set_vbar_el1((uint64_t)&exception_vector);
 }
 
@@ -81,7 +81,7 @@ uint32_t sched_tick_index = 0;
 
 struct task* pongo_sched_head;
 
-char pongo_sched_tick() {
+char pongo_sched_tick(void) {
     char rvalue = 0;
     disable_interrupts();
     if (!pongo_sched_head) panic("no tasks to schedule");
@@ -127,7 +127,7 @@ char soc_name[9] = {};
 uint32_t socnum = 0x0;
 void (*sep_boot_hook)(void);
 
-__attribute__((noinline)) void pongo_entry_cached()
+__attribute__((noinline)) void pongo_entry_cached(void)
 {
     extern char preemption_over;
     preemption_over = 1;
@@ -200,7 +200,7 @@ __attribute__((noinline)) void pongo_entry_cached()
     task_current()->proc = proc_create(NULL, "kernel", PROC_NO_VM);
     task_current()->proc->vm_space = &kernel_vm_space;
 
-    void pongo_main_task();
+    void pongo_main_task(void);
     task_register(&pongo_task, pongo_main_task);
 
     // Set up FIQ timer
@@ -290,7 +290,7 @@ __attribute__((noinline)) void pongo_entry_cached()
     Description: entry point in llktrw
 
 */
-extern void set_exception_stack_core0();
+extern void set_exception_stack_core0(void);
 extern void lowlevel_set_identity(void);
 extern _Noreturn void jump_to_image_extended(void *image, void *args, void *tramp, void *original_image);
 extern uint64_t gPongoSlide;

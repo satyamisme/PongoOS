@@ -28,14 +28,14 @@
 
 
 static uint64_t gmipi_reg;
-void mipi_sleep() {
+void mipi_sleep(void) {
     if (!gmipi_reg) return;
     mipi_send_cmd(0x2805);
     spin(24 * 1000 * 20); // 20ms delay
     mipi_send_cmd(0x1005);
     spin(24 * 1000 * 20); // 20ms delay
 }
-void mipi_wake() {
+void mipi_wake(void) {
     if (!gmipi_reg) return;
     mipi_send_cmd(0x2905);
     spin(24 * 1000 * 20); // 20ms delay
@@ -63,8 +63,8 @@ struct mipi_command {
 void mipi_help(const char* cmd, char* args);
 static struct mipi_command command_table[] = {
     MIPI_COMMAND("help", "shows this message", mipi_help),
-    MIPI_COMMAND("sleep", "sends sleep command to mipi", mipi_sleep),
-    MIPI_COMMAND("wake", "sends wake command to mipi", mipi_wake)
+    MIPI_COMMAND("sleep", "sends sleep command to mipi", (void*)mipi_sleep),
+    MIPI_COMMAND("wake", "sends wake command to mipi", (void*)mipi_wake)
 };
 
 void mipi_help(const char* cmd, char* args) {
@@ -95,7 +95,7 @@ void mipi_cmd(const char* cmd, char* args) {
     }
 }
 
-void mipi_init() {
+void mipi_init(void) {
     if(dt_find(gDeviceTree, "mipi-dsim")) {
         uint64_t mipi_reg = dt_get_u32_prop("mipi-dsim", "reg");
         mipi_reg += gIOBase;
