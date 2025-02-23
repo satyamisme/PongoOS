@@ -36,10 +36,8 @@ __asm__(
     ".globl _set_vbar_el1\n"
     ".globl __enable_interrupts\n"
     ".globl __disable_interrupts\n"
-    ".globl _get_mpidr\n"
     ".globl _get_migsts\n"
     ".globl _set_migsts\n"
-    ".globl _get_mmfr0\n"
     ".globl _invalidate_icache\n"
     ".globl _enable_mmu_el1\n"
     ".globl _disable_mmu_el1\n"
@@ -47,8 +45,6 @@ __asm__(
     ".globl _panic_new_fp\n"
     ".globl _copy_safe_internal\n"
     ".globl _copy_retn\n"
-    ".globl _pan_on\n"
-    ".globl _pan_off\n"
     ".globl _cache_invalidate\n"
     ".globl _cache_clean_and_invalidate\n"
     ".globl _cache_clean\n"
@@ -78,17 +74,11 @@ __asm__(
     "    isb\n"
     "    ret\n"
 
-    "_get_mpidr:\n"
-    "    mrs x0, MPIDR_EL1\n"
-    "    ret\n"
     "_get_migsts:\n"
     "    mrs x0, S3_4_c15_c0_4\n"
     "    ret\n"
     "_set_migsts:\n"
     "    msr S3_4_c15_c0_4, x0\n"
-    "    ret\n"
-    "_get_mmfr0:\n"
-    "    mrs x0, id_aa64mmfr0_el1\n"
     "    ret\n"
     "_invalidate_icache:\n"
     "    dsb ish\n"
@@ -135,12 +125,6 @@ __asm__(
     "_get_ticks:\n"
     "    isb sy\n"
     "    mrs x0, cntpct_el0\n"
-    "    ret\n"
-    "_pan_on:\n"
-    ".long 0xd500419f\n"
-    "    ret\n"
-    "_pan_off:\n"
-    ".long 0xd500409f\n"
     "    ret\n"
 
     "_panic_new_fp:\n"
@@ -231,31 +215,40 @@ __asm__(
     "   ret\n"
 );
 
+uint64_t exception_stack[0x4000/8] __attribute__((aligned(0x10))) = {};
+uint64_t sched_stack[0x4000/8] __attribute__((aligned(0x10))) = {};
+
 extern void copy_retn(void);
-extern size_t copy_trap_internal(void* dest, void* src, size_t size);
-uint64_t exception_stack[0x4000/8] = {};
-uint64_t sched_stack[0x4000/8] = {};
-size_t memcpy_trap(void* dest, void* src, size_t size) {
+extern size_t copy_trap_internal(void *dest, void *src, size_t size);
+size_t memcpy_trap(void *dest, void *src, size_t size)
+{
     disable_interrupts();
-    if (!task_current()) panic("memcpy_trap requires task_current() to be populated");
-    if (task_current()->fault_catch) panic("memcpy_trap called with fault hook already populated");
-    task_current()->fault_catch = copy_retn;
-    uint64_t ID_MMFR3_EL1;
-    asm volatile("mrs %0, ID_MMFR3_EL1" : "=r"(ID_MMFR3_EL1));
 
-    if (ID_MMFR3_EL1 & 0xF0000) // PAN exists!
+    struct task *t = task_current();
+    if(!t)
     {
-        extern volatile void pan_off(void);
-        pan_off();
+        panic("memcpy_trap requires task_current() to be populated");
     }
-    size_t retn = copy_trap_internal(dest, src, size);
-    if (ID_MMFR3_EL1 & 0xF0000) // PAN exists!
+    if(t->fault_catch)
     {
-        extern volatile void pan_on(void);
-        pan_on();
+        panic("memcpy_trap called with fault hook already populated");
+    }
+    t->fault_catch = copy_retn;
+
+    size_t retn;
+    if((__builtin_arm_rsr64("id_aa64mmfr1_el1") & 0xf00000) != 0 && __builtin_arm_rsr64("s3_0_c4_c2_3") != 0) // PAN
+    {
+        __asm__ volatile(".4byte 0xd500409f"); // msr pan, 0
+        retn = copy_trap_internal(dest, src, size);
+        __asm__ volatile(".4byte 0xd500419f"); // msr pan, 1
+    }
+    else
+    {
+        retn = copy_trap_internal(dest, src, size);
     }
 
-    task_current()->fault_catch = NULL;
+    t->fault_catch = NULL;
+
     enable_interrupts();
     return retn;
 }

@@ -454,9 +454,7 @@ extern uint32_t exception_vector[];
 extern void set_vbar_el1(uint64_t vec);
 extern void rebase_pc(uint64_t vec);
 extern void rebase_sp(uint64_t vec);
-extern uint64_t get_mmfr0(void);
 extern uint64_t get_migsts(void);
-extern uint64_t get_mpidr(void);
 extern void set_migsts(uint64_t val);
 extern void enable_mmu_el1(uint64_t ttbr0, uint64_t tcr, uint64_t mair, uint64_t ttbr1);
 extern void disable_mmu_el1(void);
@@ -467,13 +465,16 @@ extern uint64_t linear_kvm_alloc(uint32_t size);
 extern void _command_register_internal(const char* name, const char* desc, void (*cb)(const char* cmd, char* args), bool hidden);
 static inline _Bool is_16k(void)
 {
-    return ((get_mmfr0() >> 20) & 0xf) == 0x1;
+    return ((__builtin_arm_rsr64("id_aa64mmfr0_el1") >> 20) & 0xf) == 0x1;
 }
 static inline void flush_tlb(void)
 {
-    __asm__ volatile("isb");
-    __asm__ volatile("tlbi vmalle1\n");
-    __asm__ volatile("dsb sy");
+    __asm__ volatile
+    (
+        "isb\n"
+        "tlbi vmalle1\n"
+        "dsb sy\n"
+    );
 }
 extern void task_real_unlink(struct task* task);
 #include "hal/hal.h"

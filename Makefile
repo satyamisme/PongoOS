@@ -112,7 +112,7 @@ ifdef DEV_BUILD
 endif
 
 # Pongo options
-PONGO_LD_FLAGS              ?= -static -L$(LIB)/fixup -lc -Wl,-preload -Wl,-no_uuid -Wl,-e,start -Wl,-order_file,$(SRC)/sym_order.txt -Wl,-image_base,0x100000000 -Wl,-sectalign,__DATA,__common,0x8 -Wl,-segalign,0x4000 $(PONGO_LDFLAGS)
+PONGO_LD_FLAGS              ?= -static -L$(LIB)/fixup -lc -Wl,-preload -Wl,-no_uuid -Wl,-e,start -Wl,-order_file,$(SRC)/sym_order.txt -Wl,-image_base,0x100000000 -Wl,-sectalign,__DATA,__common,0x10 -Wl,-segalign,0x4000 $(PONGO_LDFLAGS)
 PONGO_CC_FLAGS              ?= -Os -moutline -DPONGO_VERSION='"$(PONGO_VERSION)"' -DPONGO_BUILD='"$(PONGO_BUILD)"' -DPONGO_PRIVATE=1 -I$(SRC)/lib -I$(INC) -Iapple-include -I$(SRC)/kernel -I$(SRC)/drivers $(PONGO_LD_FLAGS) $(PONGO_CFLAGS)
 
 # KPF options
