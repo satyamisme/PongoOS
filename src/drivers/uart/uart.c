@@ -105,8 +105,7 @@ uint64_t gUartBase;
 extern uint32_t gLogoBitmap[32];
 void serial_early_init(void) {
     disable_interrupts();
-    gUartBase = dt_node_u32(serial_dt_node(), "reg", 0);
-    gUartBase += gIOBase;
+    gUartBase = gIOBase + dt_node_u64(serial_dt_node(), "reg", 0);
     orig_rUCON0  = rUCON0;
     orig_rULCON0 = rULCON0;
     orig_rUFCON0 = rUFCON0;

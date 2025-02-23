@@ -135,11 +135,11 @@ __attribute__((noinline)) void pongo_entry_cached(void)
     // Literally everything depends on this
     dt_init((void*)((uint64_t)gBootArgs->deviceTreeP - gBootArgs->virtBase + gBootArgs->physBase - 0x800000000 + kCacheableView), gBootArgs->deviceTreeLength);
 
-    gIOBase = dt_get_u64_prop_i("arm-io", "ranges", 1);
+    gIOBase = dt_get_u64("/arm-io", "ranges", 1);
 
     map_full_ram(gBootArgs->physBase & 0x7ffffffff, gBootArgs->memSize);
 
-    gDevType = dt_get_prop("arm-io", "device_type", NULL);
+    gDevType = dt_get_prop("/arm-io", "device_type", NULL);
     size_t len = strlen(gDevType) - 3;
     len = len < 8 ? len : 8;
     strncpy(soc_name, gDevType, len);
@@ -153,7 +153,7 @@ __attribute__((noinline)) void pongo_entry_cached(void)
     else if(strcmp(soc_name, "t8015") == 0) socnum = 0x8015;
     else if(strcmp(soc_name, "s8000") == 0)
     {
-        const char *sgx = dt_get_prop("sgx", "compatible", NULL);
+        const char *sgx = dt_get_prop("/arm-io/sgx", "compatible", NULL);
         if(strlen(sgx) > 4 && strcmp(sgx + 4, "s8003") == 0)
         {
             socnum = 0x8003;

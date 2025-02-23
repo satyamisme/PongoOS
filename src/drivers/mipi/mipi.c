@@ -95,11 +95,12 @@ void mipi_cmd(const char* cmd, char* args) {
     }
 }
 
-void mipi_init(void) {
-    if(dt_find(gDeviceTree, "mipi-dsim")) {
-        uint64_t mipi_reg = dt_get_u32_prop("mipi-dsim", "reg");
-        mipi_reg += gIOBase;
-        gmipi_reg = mipi_reg;
+void mipi_init(void)
+{
+    dt_node_t *mipi = dt_find(gDeviceTree, "/arm-io/mipi-dsim");
+    if(mipi)
+    {
+        gmipi_reg = gIOBase + dt_node_u64(mipi, "reg", 0);
         command_register("mipi", "mipi tools", mipi_cmd);
     }
 }

@@ -35,9 +35,9 @@ void gpio_main(void) {
 struct task gpio_task = {.name = "gpio"};
 
 uint64_t gGpioBase;
-void gpio_early_init(void) {
-    gGpioBase = dt_get_u32_prop("gpio", "reg");
-    gGpioBase += gIOBase;
+void gpio_early_init(void)
+{
+    gGpioBase = gIOBase + dt_get_u64("/arm-io/gpio", "reg", 0);
 }
 
 void gpio_init(void) {

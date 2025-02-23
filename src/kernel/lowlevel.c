@@ -618,20 +618,21 @@ void pmgr_init(void)
     gPMGRmaplen /= sizeof(*gPMGRmap);
     gPMGRdevlen /= sizeof(*gPMGRdev);
     gPMGRBase = gIOBase + gPMGRreg[0].addr;
-    gWDTBase  = gIOBase + dt_get_u64_prop("wdt", "reg");
+    gWDTBase  = gIOBase + dt_get_u64("/arm-io/wdt", "reg", 0);
     command_register("reset", "resets the device", (void*)wdt_reset);
     command_register("crash", "branches to an invalid address", (void*)0x41414141);
 }
-void interrupt_init(void) {
-    gInterruptBase = dt_get_u32_prop("aic", "reg");
-    gInterruptBase += gIOBase;
-
-    gAICVersion = dt_get_u32_prop("aic", "aic-version");
+void interrupt_init(void)
+{
+    dt_node_t *aic = dt_get("/arm-io/aic");
+    gInterruptBase = gIOBase + dt_node_u64(aic, "reg", 0);
+    gAICVersion = dt_node_u32(aic, "aic-version", 0);
 
     interrupt_or_config(0xE0000000);
     interrupt_or_config(1); // enable interrupt
 }
-void interrupt_teardown(void) {
+void interrupt_teardown(void)
+{
     wdt_disable();
     task_irq_teardown();
 }
