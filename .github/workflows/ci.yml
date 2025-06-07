@@ -7,22 +7,21 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: macos-14
     steps:
       - name: Install toolchain
         run: |
-          # Add checkra.in repository
-          echo 'deb https://assets.checkra.in/debian /' | sudo tee /etc/apt/sources.list.d/checkra1n.list
-          curl -fsSL https://assets.checkra.in/debian/archive.key | sudo tee /etc/apt/trusted.gpg.d/checkra1n.asc
-          # Add LLVM repository for clang-10 and tools
-          echo 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-10 main' | sudo tee /etc/apt/sources.list.d/llvm.list
-          curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/llvm.asc
-          sudo apt-get update
+          # Install Homebrew if not already present
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          # Add Homebrew to PATH
+          echo "/opt/homebrew/bin:/opt/homebrew/sbin" >> $GITHUB_PATH
           # Install required tools
-          sudo apt-get install -y ld64 cctools-strip clang-10 llvm-10
-          # Ensure llvm-ar-10 and llvm-ranlib-10 are available
-          sudo ln -sf /usr/bin/llvm-ar-10 /usr/bin/llvm-ar
-          sudo ln -sf /usr/bin/llvm-ranlib-10 /usr/bin/llvm-ranlib
+          brew install llvm@10 || brew install llvm
+          brew install checkra1n/cctools/ld64 checkra1n/cctools/cctools
+          # Create symbolic links for LLVM tools
+          ln -sf /opt/homebrew/opt/llvm@10/bin/clang /opt/homebrew/bin/clang-10 || ln -sf /opt/homebrew/opt/llvm/bin/clang /opt/homebrew/bin/clang-10
+          ln -sf /opt/homebrew/opt/llvm@10/bin/llvm-ar /opt/homebrew/bin/llvm-ar-10 || ln -sf /opt/homebrew/opt/llvm/bin/llvm-ar /opt/homebrew/bin/llvm-ar-10
+          ln -sf /opt/homebrew/opt/llvm@10/bin/llvm-ranlib /opt/homebrew/bin/llvm-ranlib-10 || ln -sf /opt/homebrew/opt/llvm/bin/llvm-ranlib /opt/homebrew/bin/llvm-ranlib-10
       - name: Voodoo magic
         id: voodoo
         uses: actions/cache@v4
@@ -45,7 +44,10 @@ jobs:
           git reset --hard origin/$(git branch --show-current)
           git submodule update --recursive --remote
       - name: Compile
-        run: EMBEDDED_CC='clang-10' EMBEDDED_AR='llvm-ar-10' EMBEDDED_RANLIB='llvm-ranlib-10' make all
+        run: |
+          # Add Homebrew LLVM tools to PATH
+          export PATH="/opt/homebrew/opt/llvm@10/bin:/opt/homebrew/bin:$PATH"
+          EMBEDDED_CC='clang-10' EMBEDDED_AR='llvm-ar-10' EMBEDDED_RANLIB='llvm-ranlib-10' make all
       - name: Archive
         uses: actions/upload-artifact@v4
         with:
